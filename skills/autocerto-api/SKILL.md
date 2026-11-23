@@ -123,6 +123,7 @@ Use MCP `call_operation` / `call_batch` when connected, or `api-anything call au
 | `getLeadHistory` | Negotiation history for a lead | `id` (`IdLead`) |
 | `listAgenda` | Scheduled follow-ups (visits & calls) | `pagina` |
 | `listLeadStatuses` | Active follow-up statuses (`id`, `nome`) for `scheduleLead` / `commentLead` / `updateLeadStatus` | *(none)* |
+| `listWhatsappTemplates` | Approved WhatsApp templates (`id`, `titulo`, `texto`) for a lead | `id` (`IdLead`) |
 
 ### Write Operations (`readOnly: false` — require explicit user confirmation)
 
@@ -132,6 +133,7 @@ Execute via MCP `call_write_operation` (when MCP runs with `--allow-writes`) or 
 | --- | --- | --- | --- |
 | `scheduleLead` | `POST /Lead/Agendar` | Schedule visit (`tipo=1`) or call (`tipo=2`) follow-up | `id`, `dia` (`dd/mm/aaaa`), `hora` (`HH:MM`), `tipo?` (`1`/`2`), `responsavel?` (`1`/`2`), `observacao?`, `situacao?` |
 | `replyLead` | `POST /Lead/Responder` | Send real message to customer on integrated channel | `id`, `texto`, `canal?` (`1`=WhatsApp, `2`=Messenger, `3`=Direct, `4`=E-mail, `5`=OLX) |
+| `sendWhatsappTemplate` | `POST /Lead/Responder` | Send approved WhatsApp template (re-opens closed 24h window) | `id`, `modelo` (template ID from `listWhatsappTemplates`) |
 | `commentLead` | `POST /Lead/Comentar` | Save internal note on lead timeline (does NOT message customer) | `id`, `texto`, `situacao?` |
 | `updateLeadTemperature` | `POST /Lead/AlterarTemperatura` | Update lead temperature | `id`, `temperatura` (`1`=Frio, `2`=Morno, `3`=Quente) |
 | `updateLeadStatus` | `POST /Lead/AlterarSituacao` | Update lead follow-up status (substatus) | `id`, `situacao` (ID from `listLeadStatuses`) |

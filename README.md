@@ -5,7 +5,7 @@ Skill reutilizável para agentes de IA (**Antigravity**, **Claude Code**, **Code
 ## O que esta skill faz
 
 - **Instala e valida** o `api-anything` (incluindo suporte a **Linux, macOS e Android/Termux/Antigravity CLI** com correção automática de `OPENSSL_CONF`).
-- **Configura o spec local do AutoCerto** (`~/.api-anything/sites/autocerto.json`) em HTTP direto (`tier: 1`) com **9 operações somente leitura** e **8 operações de escrita protegidas por confirmação**:
+- **Configura o spec local do AutoCerto** (`~/.api-anything/sites/autocerto.json`) em HTTP direto (`tier: 1`) com **10 operações somente leitura** e **9 operações de escrita protegidas por confirmação**:
 
 ### Operações somente leitura (`readOnly: true`)
 - `listStock` — listar e filtrar estoque (busca rápida, placa, ano, preço, página)
@@ -17,10 +17,12 @@ Skill reutilizável para agentes de IA (**Antigravity**, **Claude Code**, **Code
 - `getLeadHistory` — histórico de negociações do lead
 - `listAgenda` — agenda de visitas e ligações de follow-up
 - `listLeadStatuses` — situações (substatus) de acompanhamento configuradas na loja
+- `listWhatsappTemplates` — modelos aprovados do WhatsApp disponíveis para um lead
 
 ### Operações de escrita (`readOnly: false` — bloqueadas sem `--allow-writes`)
 - `scheduleLead` (`POST /Lead/Agendar`) — agendar visita (`tipo=1`) ou ligação (`tipo=2`) de follow-up
 - `replyLead` (`POST /Lead/Responder`) — enviar mensagem de resposta ao cliente (WhatsApp, Messenger, Direct, E-mail, Chat OLX)
+- `sendWhatsappTemplate` (`POST /Lead/Responder`) — enviar modelo aprovado do WhatsApp (ideal para reativar leads fora da janela de 24h)
 - `commentLead` (`POST /Lead/Comentar`) — registrar comentário/nota interna no lead (não envia ao cliente)
 - `updateLeadTemperature` (`POST /Lead/AlterarTemperatura`) — alterar temperatura (`1=Frio`, `2=Morno`, `3=Quente`)
 - `updateLeadStatus` (`POST /Lead/AlterarSituacao`) — alterar situação/substatus de acompanhamento

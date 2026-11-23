@@ -67,15 +67,18 @@ fi
 
 echo "OK: api-anything $(api-anything --version)"
 
-# 5. Install AutoCerto site spec
+# 5. Install AutoCerto site spec (and initialize write.key without link() for Android SELinux)
 mkdir -p "$API_ANYTHING_HOME/sites"
 cp "$SPEC_SRC" "$API_ANYTHING_HOME/sites/autocerto.json"
 chmod 600 "$API_ANYTHING_HOME/sites/autocerto.json"
+if [ ! -f "$API_ANYTHING_HOME/write.key" ]; then
+  node -e 'const fs=require("fs"),c=require("crypto");const p=process.argv[1];fs.writeFileSync(p,c.randomBytes(32).toString("hex"),{mode:0o600});fs.chmodSync(p,0o600);' "$API_ANYTHING_HOME/write.key"
+fi
 echo "OK: Installed site spec -> $API_ANYTHING_HOME/sites/autocerto.json"
 
 # 6. Validate spec loads cleanly
 api-anything ops autocerto >/dev/null
-echo "OK: Validated autocerto spec (9 read-only + 8 write operations ready)"
+echo "OK: Validated autocerto spec (10 read-only + 9 write operations ready)"
 
 # 7. If an active session already exists, sync CSRF token for write operations
 if [ -f "$API_ANYTHING_HOME/sessions/autocerto.json" ]; then

@@ -459,6 +459,89 @@
       "learnedLoggedIn": true
     },
     {
+      "name": "listWhatsappTemplates",
+      "description": "Lista os modelos (templates) aprovados do WhatsApp disponíveis para um lead específico (GET /Lead/Modelos?id={id}), com texto pré-preenchido para o cliente.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/Modelos?id=0",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "id", "at": ["query:id"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Conversas?idlead={id}"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/Modelos"
+      },
+      "response": {
+        "format": "json",
+        "extract": "modelos",
+        "pick": [
+          "id=id",
+          "titulo=titulo",
+          "texto=texto",
+          "lembrete=lembrete"
+        ],
+        "key": "id"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "sendWhatsappTemplate",
+      "description": "ESCRITA: Envia um modelo (template) aprovado do WhatsApp para um lead (POST /Lead/Responder com canal=1 e modelo=ID). Ideal para reativar clientes com janela de 24h fechada. Consulte os IDs válidos com listWhatsappTemplates.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/Responder",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&canal=1&modelo=0"
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "modelo", "at": ["form:modelo"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Conversas?idlead={id}",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/Responder"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "modelo", "type": "number", "required": true, "min": 1, "description": "ID do modelo aprovado do WhatsApp (consulte listWhatsappTemplates)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
       "name": "scheduleLead",
       "description": "ESCRITA: Agenda uma visita (tipo=1) ou ligação (tipo=2) de follow-up para um lead (POST /Lead/Agendar). Sempre confirme lead, data, hora e observação com o usuário antes de enviar.",
       "request": {
