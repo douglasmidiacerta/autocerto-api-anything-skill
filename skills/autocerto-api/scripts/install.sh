@@ -75,15 +75,28 @@ echo "OK: Installed site spec -> $API_ANYTHING_HOME/sites/autocerto.json"
 
 # 6. Validate spec loads cleanly
 api-anything ops autocerto >/dev/null
-echo "OK: Validated autocerto spec (8 read-only operations ready)"
+echo "OK: Validated autocerto spec (9 read-only + 8 write operations ready)"
+
+# 7. If an active session already exists, sync CSRF token for write operations
+if [ -f "$API_ANYTHING_HOME/sessions/autocerto.json" ]; then
+  if node "$SCRIPT_DIR/sync-csrf.mjs"; then
+    :
+  else
+    echo "WARN: Could not sync anti-forgery token yet (re-import cookies and run: node $SCRIPT_DIR/sync-csrf.mjs)"
+  fi
+fi
 
 echo ""
 echo "Next steps:"
 echo "  1. Export cookies from https://sistema.autocerto.com (signed in) to a local file."
-echo "  2. Import session:"
+echo "  2. Import session and sync anti-forgery token (needed for write operations):"
 echo "       api-anything login autocerto --cookies /path/to/autocerto-cookies.json"
-echo "  3. Test:"
+echo "       node \"$SCRIPT_DIR/sync-csrf.mjs\""
+echo "  3. Test read-only calls:"
 echo "       api-anything call autocerto leadCounters"
 echo "       api-anything call autocerto searchStockJson query="
-echo "  4. Connect MCP to your agent (optional):"
+echo "       api-anything call autocerto listLeadStatuses"
+echo "  4. Preview a write safely (--dry sends nothing):"
+echo "       api-anything call autocerto scheduleLead id=123 tipo=2 dia=25/11/2026 hora=14:30 observacao='Teste' --dry"
+echo "  5. Connect MCP to your agent (optional; add --allow-writes only if you want MCP write tools):"
 echo "       npx -y api-anything setup --no-share"

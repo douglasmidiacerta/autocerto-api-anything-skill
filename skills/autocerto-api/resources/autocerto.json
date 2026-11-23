@@ -2,7 +2,7 @@
   "name": "autocerto",
   "displayName": "AutoCerto",
   "baseUrl": "https://sistema.autocerto.com",
-  "description": "Painel AutoCerto (sistema.autocerto.com): listar e buscar estoque de veículos, consultar leads, histórico, conversas e agenda de follow-up.",
+  "description": "Painel AutoCerto (sistema.autocerto.com): listar e buscar estoque de veículos, consultar leads, histórico, conversas e agenda, além de ações de escrita (agendar follow-up, responder lead, comentar, alterar temperatura/situação e gerenciar agendamentos).",
   "loginCookies": [
     ".AspNet.ApplicationCookie"
   ],
@@ -228,7 +228,10 @@
       ],
       "links": [
         { "from": "id", "to": { "op": "getLeadConversation", "arg": "id" } },
-        { "from": "id", "to": { "op": "getLeadHistory", "arg": "id" } }
+        { "from": "id", "to": { "op": "getLeadHistory", "arg": "id" } },
+        { "from": "id", "to": { "op": "scheduleLead", "arg": "id" } },
+        { "from": "id", "to": { "op": "replyLead", "arg": "id" } },
+        { "from": "id", "to": { "op": "commentLead", "arg": "id" } }
       ],
       "readOnly": true,
       "minTier": 1,
@@ -297,7 +300,10 @@
       ],
       "links": [
         { "from": "id", "to": { "op": "getLeadConversation", "arg": "id" } },
-        { "from": "id", "to": { "op": "getLeadHistory", "arg": "id" } }
+        { "from": "id", "to": { "op": "getLeadHistory", "arg": "id" } },
+        { "from": "id", "to": { "op": "scheduleLead", "arg": "id" } },
+        { "from": "id", "to": { "op": "replyLead", "arg": "id" } },
+        { "from": "id", "to": { "op": "commentLead", "arg": "id" } }
       ],
       "readOnly": true,
       "minTier": 1,
@@ -408,9 +414,399 @@
       ],
       "links": [
         { "from": "idLead", "to": { "op": "getLeadConversation", "arg": "id" } },
-        { "from": "idLead", "to": { "op": "getLeadHistory", "arg": "id" } }
+        { "from": "idLead", "to": { "op": "getLeadHistory", "arg": "id" } },
+        { "from": "id", "to": { "op": "confirmAppointment", "arg": "idAgendamento" } },
+        { "from": "id", "to": { "op": "rescheduleAppointmentTime", "arg": "idAgendamento" } },
+        { "from": "id", "to": { "op": "completeAppointment", "arg": "idAgendamento" } }
       ],
       "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "listLeadStatuses",
+      "description": "Lista as situações (substatus) de acompanhamento configuradas na loja (/Lead/ObterSubStatus?finalizado=false) para usar em scheduleLead, commentLead e updateLeadStatus.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/ObterSubStatus?finalizado=false",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/ObterSubStatus"
+      },
+      "response": {
+        "format": "json",
+        "pick": [
+          "id=Value",
+          "nome=Caption"
+        ],
+        "key": "id"
+      },
+      "params": [],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "scheduleLead",
+      "description": "ESCRITA: Agenda uma visita (tipo=1) ou ligação (tipo=2) de follow-up para um lead (POST /Lead/Agendar). Sempre confirme lead, data, hora e observação com o usuário antes de enviar.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/Agendar",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&tipo=1&dia=01%2F01%2F2026&hora=10%3A00&responsavel=1&observacao=&situacao="
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "tipo", "at": ["form:tipo"] },
+        { "param": "dia", "at": ["form:dia"] },
+        { "param": "hora", "at": ["form:hora"] },
+        { "param": "responsavel", "at": ["form:responsavel"] },
+        { "param": "observacao", "at": ["form:observacao"] },
+        { "param": "situacao", "at": ["form:situacao"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/Agendar"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "tipo", "type": "number", "required": false, "default": 1, "min": 1, "max": 2, "description": "Tipo do agendamento: 1 = Visita, 2 = Ligação (padrão: 1)" },
+        { "name": "dia", "type": "string", "required": true, "pattern": "\\d{2}/\\d{2}/\\d{4}", "hint": "data no formato dd/mm/aaaa (ex.: 25/11/2026)", "description": "Data do agendamento no formato dd/mm/aaaa" },
+        { "name": "hora", "type": "string", "required": true, "pattern": "([01]\\d|2[0-3]):[0-5]\\d", "hint": "horário no formato HH:MM (ex.: 14:30)", "description": "Horário no formato HH:MM" },
+        { "name": "responsavel", "type": "number", "required": false, "default": 1, "min": 1, "max": 2, "description": "Responsável: 1 = Eu (usuário logado), 2 = Vendedor do lead (padrão: 1)" },
+        { "name": "observacao", "type": "string", "required": false, "default": "", "description": "Observação opcional (até 1500 caracteres)" },
+        { "name": "situacao", "type": "string", "required": false, "default": "", "description": "ID opcional da situação/substatus (use listLeadStatuses; vazio mantém a atual)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "replyLead",
+      "description": "ESCRITA: Envia mensagem real ao cliente no canal integrado do lead (POST /Lead/Responder). Sempre confirme destinatário, canal e texto exato com o usuário antes de enviar.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/Responder",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&canal=1&texto="
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "canal", "at": ["form:canal"] },
+        { "param": "texto", "at": ["form:texto"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Conversas?idlead={id}",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/Responder"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "texto", "type": "string", "required": true, "description": "Texto exato da mensagem a enviar ao cliente" },
+        { "name": "canal", "type": "number", "required": false, "default": 1, "min": 1, "max": 5, "description": "Canal: 1 = WhatsApp, 2 = Messenger, 3 = Direct (Instagram), 4 = E-mail, 5 = Chat OLX (padrão: 1)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "commentLead",
+      "description": "ESCRITA: Registra um comentário/nota interna no histórico do lead (POST /Lead/Comentar). Não envia mensagem ao cliente. Sempre confirme com o usuário antes de salvar.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/Comentar",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&texto=&situacao="
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "texto", "at": ["form:texto"] },
+        { "param": "situacao", "at": ["form:situacao"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Conversas?idlead={id}",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/Comentar"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "texto", "type": "string", "required": true, "description": "Texto da nota interna" },
+        { "name": "situacao", "type": "string", "required": false, "default": "", "description": "ID opcional da situação/substatus (use listLeadStatuses)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "updateLeadTemperature",
+      "description": "ESCRITA: Altera a temperatura (termômetro) de um lead (POST /Lead/AlterarTemperatura): 1 = Frio, 2 = Morno, 3 = Quente.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/AlterarTemperatura",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&temperatura=2"
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "temperatura", "at": ["form:temperatura"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/AlterarTemperatura"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "temperatura", "type": "number", "required": true, "min": 1, "max": 3, "description": "1 = Frio, 2 = Morno, 3 = Quente" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "updateLeadStatus",
+      "description": "ESCRITA: Altera a situação (substatus) de acompanhamento de um lead (POST /Lead/AlterarSituacao). Consulte os IDs válidos com listLeadStatuses.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/AlterarSituacao",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&situacao=0"
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "situacao", "at": ["form:situacao"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/AlterarSituacao"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "situacao", "type": "number", "required": true, "min": 1, "description": "ID da situação (consulte listLeadStatuses)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "completeAppointment",
+      "description": "ESCRITA: Conclui um agendamento de visita ou ligação de um lead (POST /Lead/ConcluirAgendamentoLead), podendo também reagendar (como='5') ou avançar etapa no Kanban (como='3').",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/ConcluirAgendamentoLead",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&idAgendamento=0&como=&observacao=&dia=&hora=&situacao="
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "idAgendamento", "at": ["form:idAgendamento"] },
+        { "param": "como", "at": ["form:como"] },
+        { "param": "observacao", "at": ["form:observacao"] },
+        { "param": "dia", "at": ["form:dia"] },
+        { "param": "hora", "at": ["form:hora"] },
+        { "param": "situacao", "at": ["form:situacao"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Agenda/Lista",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/ConcluirAgendamentoLead"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "idAgendamento", "type": "number", "required": true, "min": 1, "description": "ID do agendamento (de listAgenda)" },
+        { "name": "observacao", "type": "string", "required": true, "description": "Observação sobre o resultado do contato/visita" },
+        { "name": "como", "type": "string", "required": false, "default": "", "enum": ["", "2", "3", "5", "6"], "description": "Para visitas: '3'=Realizada, '6'=Não compareceu, '2'=Cancelada, '5'=Reagendada (vazio para ligação)" },
+        { "name": "dia", "type": "string", "required": false, "default": "", "pattern": "|\\d{2}/\\d{2}/\\d{4}", "hint": "vazio ou data no formato dd/mm/aaaa", "description": "Novo dia dd/mm/aaaa (somente se como='5' Reagendada)" },
+        { "name": "hora", "type": "string", "required": false, "default": "", "pattern": "|([01]\\d|2[0-3]):[0-5]\\d", "hint": "vazio ou horário no formato HH:MM", "description": "Nova hora HH:MM (somente se como='5' Reagendada)" },
+        { "name": "situacao", "type": "string", "required": false, "default": "", "description": "ID opcional da próxima etapa/situação (quando como='3' Realizada)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "confirmAppointment",
+      "description": "ESCRITA: Confirma um agendamento existente na agenda (POST /Agenda/Confirmar).",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Agenda/Confirmar",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "idAgendamento=0"
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "idAgendamento", "at": ["form:idAgendamento"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Agenda/Lista",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Agenda/Confirmar"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "idAgendamento", "type": "number", "required": true, "min": 1, "description": "ID do agendamento (de listAgenda)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "rescheduleAppointmentTime",
+      "description": "ESCRITA: Altera o horário de um agendamento no mesmo dia (POST /Agenda/AlterarHorario).",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Agenda/AlterarHorario",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "idAgendamento=0&hora=10%3A00&observacao="
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "idAgendamento", "at": ["form:idAgendamento"] },
+        { "param": "hora", "at": ["form:hora"] },
+        { "param": "observacao", "at": ["form:observacao"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Agenda/Lista",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Agenda/AlterarHorario"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "idAgendamento", "type": "number", "required": true, "min": 1, "description": "ID do agendamento (de listAgenda)" },
+        { "name": "hora", "type": "string", "required": true, "pattern": "([01]\\d|2[0-3]):[0-5]\\d", "hint": "horário no formato HH:MM (ex.: 15:00)", "description": "Novo horário no formato HH:MM" },
+        { "name": "observacao", "type": "string", "required": false, "default": "", "description": "Observação opcional" }
+      ],
+      "readOnly": false,
       "minTier": 1,
       "learnedLoggedIn": true
     }
