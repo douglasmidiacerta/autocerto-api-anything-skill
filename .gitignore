@@ -1,0 +1,13 @@
+# Secrets, cookies and local exports — NEVER commit these
+*cookies*.json
+*cookies*.txt
+cookies.json
+cookies.txt
+*.har
+*.env
+.env*
+sessions/
+*.key
+*.pem
+.DS_Store
+node_modules/

@@ -1,0 +1,418 @@
+{
+  "name": "autocerto",
+  "displayName": "AutoCerto",
+  "baseUrl": "https://sistema.autocerto.com",
+  "description": "Painel AutoCerto (sistema.autocerto.com): listar e buscar estoque de veículos, consultar leads, histórico, conversas e agenda de follow-up.",
+  "loginCookies": [
+    ".AspNet.ApplicationCookie"
+  ],
+  "operations": [
+    {
+      "name": "listStock",
+      "description": "Lista ou busca veículos no estoque da loja (/Veiculo/ObterVeiculosAjax). Suporta busca rápida (marca, modelo ou placa), placa, faixa de ano, faixa de preço e página.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Veiculo/ObterVeiculosAjax?page=1&BuscaRapida=&Placa=&AnoDe=&AnoAte=&PrecoDe=&PrecoAte=",
+        "headers": {
+          "accept": "text/html, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "page", "at": ["query:page"] },
+        { "param": "query", "at": ["query:BuscaRapida"] },
+        { "param": "placa", "at": ["query:Placa"] },
+        { "param": "anoDe", "at": ["query:AnoDe"] },
+        { "param": "anoAte", "at": ["query:AnoAte"] },
+        { "param": "precoDe", "at": ["query:PrecoDe"] },
+        { "param": "precoAte", "at": ["query:PrecoAte"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Veiculo/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Veiculo/ObterVeiculosAjax"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=utf-8",
+        "html": {
+          "items": "table.ac-eg-table tbody tr[data-eg-veiculo]",
+          "fields": {
+            "id": "@data-eg-veiculo",
+            "titulo": ".ac-vtitle strong",
+            "versao": ".ac-vtitle > span",
+            "placa": ".ac-plate",
+            "precoSite": ".ac-price strong",
+            "diasEstoque": ".ac-days-pill",
+            "statusSite": ".ac-site",
+            "foto": ".ac-vphoto img@src"
+          }
+        },
+        "key": "id"
+      },
+      "params": [
+        { "name": "query", "type": "string", "required": false, "default": "", "description": "Busca rápida por marca, modelo ou placa (BuscaRapida)" },
+        { "name": "placa", "type": "string", "required": false, "default": "", "description": "Filtro exato/parcial de placa" },
+        { "name": "anoDe", "type": "string", "required": false, "default": "", "description": "Ano mínimo (ex.: 2020)" },
+        { "name": "anoAte", "type": "string", "required": false, "default": "", "description": "Ano máximo (ex.: 2024)" },
+        { "name": "precoDe", "type": "string", "required": false, "default": "", "description": "Preço mínimo" },
+        { "name": "precoAte", "type": "string", "required": false, "default": "", "description": "Preço máximo" },
+        { "name": "page", "type": "number", "required": false, "default": 1, "min": 1, "description": "Página (padrão 1)" }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "searchStockJson",
+      "description": "Busca veículos do estoque em JSON completo com campos numéricos exatos (IdVeiculo, Marca, Modelo, Versao, AnoFabricacao, AnoModelo, Placa, Km, Preco, PrecoClassificados, Reservado). Deixe query vazia para listar todo o estoque.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/BuscarEstoque?id=0&busca=",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "from": {
+            "request": {
+              "method": "GET",
+              "url": "https://sistema.autocerto.com/Lead/ConsultaPagina?pagina=1",
+              "headers": {
+                "accept": "application/json, text/javascript, */*; q=0.01",
+                "x-requested-with": "XMLHttpRequest",
+                "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+              }
+            },
+            "slots": []
+          },
+          "path": "leads[0].IdLead",
+          "at": ["query:id"]
+        },
+        { "param": "query", "at": ["query:busca"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/BuscarEstoque"
+      },
+      "response": {
+        "format": "json",
+        "extract": "veiculos",
+        "pick": [
+          "id=IdVeiculo",
+          "marca=Marca",
+          "modelo=Modelo",
+          "versao=Versao",
+          "anoFabricacao=AnoFabricacao",
+          "anoModelo=AnoModelo",
+          "placa=Placa",
+          "km=Km",
+          "preco=Preco",
+          "precoClassificados=PrecoClassificados",
+          "reservado=Reservado",
+          "foto=FotoPrincipal"
+        ],
+        "key": "id"
+      },
+      "params": [
+        { "name": "query", "type": "string", "required": false, "default": "", "description": "Termo de busca (marca, modelo, versão ou placa). Vazio retorna todo o estoque." }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "leadCounters",
+      "description": "Retorna os contadores das pastas de leads (Pendente, Andamento, AndamentoAtrasado, Agendados, AgendadosAtrasados, AgendadosHoje, AgendadosFuturos) e os leads que chegaram hoje por mídia.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/ListaContadores",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/ListaContadores"
+      },
+      "response": {
+        "format": "json",
+        "pick": ["pastas", "chegaramHoje"]
+      },
+      "params": [],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "listLeads",
+      "description": "Lista os leads por pasta (pend=pendentes, pri=1º atendimento, and=em andamento, atr=atrasados, ag=agendados, agatr=agendamento atrasado, aghoje=agendados hoje, agfut=próximos dias, todos=em aberto).",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/ListaPagina?pasta=pend&pagina=1&busca=",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "pasta", "at": ["query:pasta"] },
+        { "param": "pagina", "at": ["query:pagina"] },
+        { "param": "busca", "at": ["query:busca"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/ListaPagina"
+      },
+      "response": {
+        "format": "json",
+        "extract": "cards",
+        "pick": [
+          "id=IdLead",
+          "nome=Nome",
+          "telefone=Telefone",
+          "midia=Midia",
+          "carro=Carro",
+          "versao=Versao",
+          "placa=Placa",
+          "anoModelo=AnoModelo",
+          "preco=Preco",
+          "status=Status",
+          "subStatus=SubStatus",
+          "termometro=Termometro",
+          "responsavel=Responsavel",
+          "dataLead=DataLead",
+          "dataUltimoAndamento=DataUltimoAndamento",
+          "dataAgendamento=DataAgendamento"
+        ],
+        "key": "id"
+      },
+      "params": [
+        {
+          "name": "pasta",
+          "type": "string",
+          "required": false,
+          "default": "pend",
+          "enum": ["pend", "pri", "semv", "semapoio", "and", "atr", "ag", "agatr", "aghoje", "agfut", "aprov", "todos"],
+          "description": "Pasta de leads (padrão: pend)"
+        },
+        { "name": "busca", "type": "string", "required": false, "default": "", "description": "Texto para filtrar leads" },
+        { "name": "pagina", "type": "number", "required": false, "default": 1, "min": 1, "description": "Página (25 por página)" }
+      ],
+      "links": [
+        { "from": "id", "to": { "op": "getLeadConversation", "arg": "id" } },
+        { "from": "id", "to": { "op": "getLeadHistory", "arg": "id" } }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "searchLeads",
+      "description": "Consulta avançada de leads (incluindo finalizados e em andamento) por nome, telefone, veículo ou período de datas.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/ConsultaPagina?pagina=1&nome=&telefone=&veiculo=&dataInicial=&dataFinal=",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "pagina", "at": ["query:pagina"] },
+        { "param": "nome", "at": ["query:nome"] },
+        { "param": "telefone", "at": ["query:telefone"] },
+        { "param": "veiculo", "at": ["query:veiculo"] },
+        { "param": "dataInicial", "at": ["query:dataInicial"] },
+        { "param": "dataFinal", "at": ["query:dataFinal"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Busca"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/ConsultaPagina"
+      },
+      "response": {
+        "format": "json",
+        "extract": "leads",
+        "pick": [
+          "id=IdLead",
+          "nome=Nome",
+          "telefone=Telefone",
+          "email=Email",
+          "veiculo=Veiculo",
+          "placa=Placa",
+          "anoModelo=AnoModelo",
+          "midia=Midia",
+          "interesse=Interesse",
+          "status=Status",
+          "subStatus=SubStatus",
+          "termometro=Termometro",
+          "dataLead=DataLead",
+          "dataUltimoAndamento=DataUltimoAndamento",
+          "dataAgendamento=DataAgendamento",
+          "responsavel=Responsavel",
+          "teor=Teor"
+        ],
+        "key": "id"
+      },
+      "params": [
+        { "name": "nome", "type": "string", "required": false, "default": "", "description": "Nome do cliente" },
+        { "name": "telefone", "type": "string", "required": false, "default": "", "description": "Telefone do cliente" },
+        { "name": "veiculo", "type": "string", "required": false, "default": "", "description": "Veículo de interesse" },
+        { "name": "dataInicial", "type": "string", "required": false, "default": "", "description": "Data inicial (YYYY-MM-DD)" },
+        { "name": "dataFinal", "type": "string", "required": false, "default": "", "description": "Data final (YYYY-MM-DD)" },
+        { "name": "pagina", "type": "number", "required": false, "default": 1, "min": 1, "description": "Página (25 por página)" }
+      ],
+      "links": [
+        { "from": "id", "to": { "op": "getLeadConversation", "arg": "id" } },
+        { "from": "id", "to": { "op": "getLeadHistory", "arg": "id" } }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "getLeadConversation",
+      "description": "Obtém as mensagens e interações da conversa de um lead específico pelo IdLead.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/Conversa?id=0",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "id", "at": ["query:id"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Conversas?idlead={id}"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/Conversa"
+      },
+      "response": {
+        "format": "json",
+        "extract": "conversa"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "description": "IdLead do lead" }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "getLeadHistory",
+      "description": "Obtém o histórico de negociações de um lead/cliente pelo IdLead.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/Historico?id=0",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "id", "at": ["query:id"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/Historico"
+      },
+      "response": {
+        "format": "json",
+        "extract": "negociacoes",
+        "key": "id"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "description": "IdLead do lead" }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "listAgenda",
+      "description": "Lista os agendamentos de follow-up (visitas e ligações) da agenda.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Agenda/ListaPaginada?pagina=1",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "pagina", "at": ["query:pagina"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Agenda/Lista"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Agenda/ListaPaginada"
+      },
+      "response": {
+        "format": "json",
+        "extract": "itens",
+        "key": "id"
+      },
+      "params": [
+        { "name": "pagina", "type": "number", "required": false, "default": 1, "min": 1, "description": "Página (25 por página)" }
+      ],
+      "links": [
+        { "from": "idLead", "to": { "op": "getLeadConversation", "arg": "id" } },
+        { "from": "idLead", "to": { "op": "getLeadHistory", "arg": "id" } }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    }
+  ]
+}
