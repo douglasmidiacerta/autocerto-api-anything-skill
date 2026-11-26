@@ -5,15 +5,17 @@ Skill reutilizável para agentes de IA (**Antigravity**, **Claude Code**, **Code
 ## O que esta skill faz
 
 - **Instala e valida** o `api-anything` (incluindo suporte a **Linux, macOS e Android/Termux/Antigravity CLI** com correção automática de `OPENSSL_CONF`).
-- **Configura o spec local do AutoCerto** (`~/.api-anything/sites/autocerto.json`) em HTTP direto (`tier: 1`) com **10 operações somente leitura** e **9 operações de escrita protegidas por confirmação**:
+- **Configura o spec local do AutoCerto** (`~/.api-anything/sites/autocerto.json`) em HTTP direto (`tier: 1`) com **12 operações somente leitura** e **11 operações de escrita protegidas por confirmação**:
 
 ### Operações somente leitura (`readOnly: true`)
 - `listStock` — listar e filtrar estoque (busca rápida, placa, ano, preço, página)
 - `searchStockJson` — buscar estoque em JSON completo com valores numéricos exatos (`km`, `preco`, `reservado`, `anoFabricacao`, `anoModelo`)
-- `leadCounters` — contadores das pastas de leads (`Pendente`, `Andamento`, `AgendadosAtrasados`, `chegaramHoje`)
-- `listLeads` — listar leads por pasta (`pend`, `pri`, `and`, `atr`, `ag`, `agatr`, `aghoje`, `agfut`, `todos`)
+- `leadCounters` — contadores das pastas de leads (`Pendente`, `PrimeiroAtendimento`, `Andamento`, `AgendadosAtrasados`, `chegaramHoje`)
+- `listLeads` — listar leads por pasta (`pend`, `pri`, `semv`, `semapoio`, `and`, `atr`, `ag`, `agatr`, `aghoje`, `agfut`, `aprov`, `todos`)
 - `searchLeads` — consulta avançada por nome, telefone, veículo e datas
-- `getLeadConversation` — ler mensagens e anexos/áudios da conversa do lead
+- `getLeadConversation` — ler mensagens e anexos/áudios da conversa do lead (suporta paginação anterior via cursor `antes`)
+- `getLeadNewMessages` — buscar mensagens mais novas após um cursor `depois` (`<IdItem>-0`)
+- `getLeadDetails` — ler dados completos do card aberto (campanha/anúncio `Teor`, veículo vinculado e `VeiculosInteresse`)
 - `getLeadHistory` — histórico de negociações do lead
 - `listAgenda` — agenda de visitas e ligações de follow-up
 - `listLeadStatuses` — situações (substatus) de acompanhamento configuradas na loja
@@ -26,11 +28,14 @@ Skill reutilizável para agentes de IA (**Antigravity**, **Claude Code**, **Code
 - `commentLead` (`POST /Lead/Comentar`) — registrar comentário/nota interna no lead (não envia ao cliente)
 - `updateLeadTemperature` (`POST /Lead/AlterarTemperatura`) — alterar temperatura (`1=Frio`, `2=Morno`, `3=Quente`)
 - `updateLeadStatus` (`POST /Lead/AlterarSituacao`) — alterar situação/substatus de acompanhamento
+- `updateLeadVehicle` (`POST /Lead/AlterarVeiculo`) — vincular um veículo do estoque ao card do lead
+- `updateLeadVehicleManual` (`POST /Lead/AlterarVeiculo`) — definir manualmente um veículo fora do estoque no card do lead
 - `completeAppointment` (`POST /Lead/ConcluirAgendamentoLead`) — concluir visita/ligação agendada (com opção de reagendar)
 - `confirmAppointment` (`POST /Agenda/Confirmar`) — confirmar presença em um agendamento
 - `rescheduleAppointmentTime` (`POST /Agenda/AlterarHorario`) — alterar horário do agendamento no mesmo dia
 
 - **Sincroniza o token anti-CSRF com segurança** via [sync-csrf.mjs](./skills/autocerto-api/scripts/sync-csrf.mjs) diretamente na sessão selada do `api-anything` (`~/.api-anything/sessions/autocerto.json`), sem nunca exibir o token no terminal.
+- **Inclui sincronizador com travas anti-duplicata e watcher contínuo:** [lead-store.mjs](./skills/autocerto-api/scripts/lead-store.mjs) (sincroniza conversas completas em Markdown/JSON e valida `expectedLastClientMessageId`, histórico de respostas e lock exclusivo antes de enviar) e [watch-autocerto.mjs](./skills/autocerto-api/scripts/watch-autocerto.mjs) (monitoramento contínuo de pastas e categorização automática de veículo via estoque).
 - **Orienta o login seguro via cookies** (Chrome/Edge/Brave no PC ou **Titanium Browser** no Android), sem nunca pedir senha ou cookies no chat.
 - **Inclui playbook de follow-up** cruzando estoque + leads + conversas + agenda, com trava obrigatória de confirmação humana antes de qualquer escrita.
 
@@ -92,7 +97,26 @@ api-anything call autocerto scheduleLead id=123 tipo=2 dia=25/11/2026 hora=14:30
 api-anything call autocerto replyLead id=123 canal=1 texto="Olá! Tudo bem?" --dry
 ```
 
-Para executar uma escrita de verdade via CLI (somente após conferir os dados), passe `--allow-writes`. No servidor MCP, inicie com `api-anything mcp --allow-writes` para expor a ferramenta `call_write_operation`.
+Para executar uma escrita de verdade via CLI (somente após conferir os dados), passe `--allow-writes`.
+
+### 5. Configurar no Antigravity (`~/.gemini/config/mcp_config.json`) com escrita liberada
+
+Para que o servidor MCP já inicie com permissão de escrita (`--allow-writes`, mantendo a regra da skill de só enviar/alterar após sua confirmação):
+
+```json
+{
+  "mcpServers": {
+    "api-anything": {
+      "command": "api-anything",
+      "args": ["mcp", "--allow-writes"]
+    }
+  }
+}
+```
+
+*(No Android/Termux/Antigravity CLI, use o caminho absoluto de `api-anything` e adicione `"env": { "OPENSSL_CONF": "<PREFIX>/etc/tls/openssl.cnf" }`.)*
+
+Depois de salvar o `mcp_config.json`, reinicie a sessão do agente uma única vez para o servidor MCP subir com `--allow-writes`.
 
 ---
 

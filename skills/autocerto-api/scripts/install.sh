@@ -78,7 +78,7 @@ echo "OK: Installed site spec -> $API_ANYTHING_HOME/sites/autocerto.json"
 
 # 6. Validate spec loads cleanly
 api-anything ops autocerto >/dev/null
-echo "OK: Validated autocerto spec (10 read-only + 9 write operations ready)"
+echo "OK: Validated autocerto spec (12 read-only + 11 write operations ready)"
 
 # 7. If an active session already exists, sync CSRF token for write operations
 if [ -f "$API_ANYTHING_HOME/sessions/autocerto.json" ]; then

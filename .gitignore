@@ -11,3 +11,6 @@ sessions/
 *.pem
 .DS_Store
 node_modules/
+.locks/
+conversas-leads.json
+conversas-leads.md

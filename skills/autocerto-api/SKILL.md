@@ -117,9 +117,11 @@ Use MCP `call_operation` / `call_batch` when connected, or `api-anything call au
 | `listStock` | List/filter stock from `/Veiculo/ObterVeiculosAjax` | `query`, `placa`, `anoDe`, `anoAte`, `precoDe`, `precoAte`, `page` |
 | `searchStockJson` | Full JSON stock with numeric `km`, `preco`, `reservado` | `query` (empty = full stock) |
 | `leadCounters` | Folder counts (`Pendente`, `Andamento`, `AgendadosAtrasados`, `chegaramHoje`) | *(none)* |
-| `listLeads` | List leads by folder (`pend`, `pri`, `and`, `atr`, `ag`, `agatr`, `aghoje`, `agfut`, `todos`) | `pasta`, `busca`, `pagina` |
+| `listLeads` | List leads by folder (`pend`, `pri`, `semv`, `semapoio`, `and`, `atr`, `ag`, `agatr`, `aghoje`, `agfut`, `aprov`, `todos`) | `pasta`, `busca`, `pagina` |
 | `searchLeads` | Advanced search across all leads (including closed) | `nome`, `telefone`, `veiculo`, `dataInicial`, `dataFinal`, `pagina` |
-| `getLeadConversation` | Full conversation messages & audio attachments for a lead | `id` (`IdLead`) |
+| `getLeadConversation` | Full conversation messages & audio attachments for a lead (supports `antes` cursor) | `id` (`IdLead`), `antes?` |
+| `getLeadNewMessages` | Newer conversation messages after cursor `depois` (`<IdItem>-0`) | `id` (`IdLead`), `depois` |
+| `getLeadDetails` | Full lead card details (`Teor`, linked vehicle, `VeiculosInteresse`) | `id` (`IdLead`) |
 | `getLeadHistory` | Negotiation history for a lead | `id` (`IdLead`) |
 | `listAgenda` | Scheduled follow-ups (visits & calls) | `pagina` |
 | `listLeadStatuses` | Active follow-up statuses (`id`, `nome`) for `scheduleLead` / `commentLead` / `updateLeadStatus` | *(none)* |
@@ -137,8 +139,15 @@ Execute via MCP `call_write_operation` (when MCP runs with `--allow-writes`) or 
 | `commentLead` | `POST /Lead/Comentar` | Save internal note on lead timeline (does NOT message customer) | `id`, `texto`, `situacao?` |
 | `updateLeadTemperature` | `POST /Lead/AlterarTemperatura` | Update lead temperature | `id`, `temperatura` (`1`=Frio, `2`=Morno, `3`=Quente) |
 | `updateLeadStatus` | `POST /Lead/AlterarSituacao` | Update lead follow-up status (substatus) | `id`, `situacao` (ID from `listLeadStatuses`) |
+| `updateLeadVehicle` | `POST /Lead/AlterarVeiculo` | Link an in-stock vehicle to the lead card | `id`, `idVeiculo` (from `searchStockJson`) |
+| `updateLeadVehicleManual` | `POST /Lead/AlterarVeiculo` | Set a manual/off-stock vehicle on the lead card | `id`, `descricao`, `preco?` |
 | `completeAppointment` | `POST /Lead/ConcluirAgendamentoLead` | Complete visit/call appointment (optionally reschedule) | `id`, `idAgendamento`, `observacao`, `como?` (`3`=Realizada, `6`=Não compareceu, `2`=Cancelada, `5`=Reagendada, `""`=Ligação), `dia?`, `hora?`, `situacao?` |
 | `confirmAppointment` | `POST /Agenda/Confirmar` | Confirm scheduled appointment on agenda | `idAgendamento` |
 | `rescheduleAppointmentTime` | `POST /Agenda/AlterarHorario` | Change appointment time on the same day | `idAgendamento`, `hora` (`HH:MM`), `observacao?` |
+
+### Optional Local Automation Helpers (`scripts/`)
+
+- `scripts/lead-store.mjs`: Full-history conversation sync (`sync <id...>`) to `conversas-leads.md`/`conversas-leads.json` (using `AUTOCERTO_STORE_DIR` or `~/.api-anything/autocerto-store`) and guarded replies (`reply '{"id":...,"expectedLastClientMessageId":...,"texto":"..."}'`) with file locks and duplicate/race protection.
+- `scripts/watch-autocerto.mjs`: Folder watcher (`--seed`, `--once`, or continuous polling) that detects pending/updated leads, auto-categorizes unlinked stock vehicles when uniquely matched, and exits cleanly with full JSON context on activity.
 
 For preparing and executing prioritized sales follow-ups by combining stock, leads, conversations, and agenda, read [references/followup-playbook.md](./references/followup-playbook.md).

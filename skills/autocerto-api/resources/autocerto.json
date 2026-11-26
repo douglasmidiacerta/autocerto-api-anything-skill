@@ -311,10 +311,10 @@
     },
     {
       "name": "getLeadConversation",
-      "description": "Obtém as mensagens e interações da conversa de um lead específico pelo IdLead.",
+      "description": "Obtém as mensagens e interações da conversa de um lead específico pelo IdLead (suporta paginação anterior via cursor 'antes').",
       "request": {
         "method": "GET",
-        "url": "https://sistema.autocerto.com/Lead/Conversa?id=0",
+        "url": "https://sistema.autocerto.com/Lead/Conversa?id=0&antes=",
         "headers": {
           "accept": "application/json, text/javascript, */*; q=0.01",
           "accept-language": "pt-BR,pt;q=0.9",
@@ -323,7 +323,8 @@
         }
       },
       "slots": [
-        { "param": "id", "at": ["query:id"] }
+        { "param": "id", "at": ["query:id"] },
+        { "param": "antes", "at": ["query:antes"] }
       ],
       "volatile": [],
       "trigger": {
@@ -338,7 +339,80 @@
         "extract": "conversa"
       },
       "params": [
-        { "name": "id", "type": "number", "required": true, "description": "IdLead do lead" }
+        { "name": "id", "type": "number", "required": true, "description": "IdLead do lead" },
+        { "name": "antes", "type": "string", "required": false, "default": "", "description": "Cursor para carregar mensagens anteriores (quando TemAnteriores=true)" }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "getLeadNewMessages",
+      "description": "Obtém mensagens mais novas da conversa de um lead após um cursor (GET /Lead/ConversaNovas?id={id}&depois={depois}). Use depois='<IdUltimoItem>-0' quando getLeadConversation retornar apenas os itens antigos.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/ConversaNovas?id=0&depois=",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "id", "at": ["query:id"] },
+        { "param": "depois", "at": ["query:depois"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Conversas?idlead={id}"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/ConversaNovas"
+      },
+      "response": {
+        "format": "json",
+        "extract": "conversa"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "description": "IdLead do lead" },
+        { "name": "depois", "type": "string", "required": true, "description": "Cursor no formato '<IdItem>-0' (ex.: 356141265-0)" }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "getLeadDetails",
+      "description": "Obtém os dados completos do lead aberto (GET /Lead/Aberto/{id}), incluindo campanha/anúncio (Teor, TeorAnexoTitulo, TeorAnexoUrl, TeorAnexoImagem), veículo vinculado e VeiculosInteresse. Observação: no AutoCerto, este endpoint marca o lead como lido.",
+      "request": {
+        "method": "GET",
+        "url": "https://sistema.autocerto.com/Lead/Aberto/0",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        { "param": "id", "at": ["path:2"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Detalhes/{id}"
+      },
+      "match": {
+        "method": "GET",
+        "path": "/Lead/Aberto/*"
+      },
+      "response": {
+        "format": "json",
+        "extract": "lead"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" }
       ],
       "readOnly": true,
       "minTier": 1,
@@ -755,6 +829,90 @@
       "params": [
         { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
         { "name": "situacao", "type": "number", "required": true, "min": 1, "description": "ID da situação (consulte listLeadStatuses)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "updateLeadVehicle",
+      "description": "ESCRITA: Vincula um veículo do estoque da loja ao card do lead (POST /Lead/AlterarVeiculo com id e idVeiculo). Consulte idVeiculo em searchStockJson. Sempre confirme lead e veículo com o usuário antes de gravar, salvo regra pré-autorizada.",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/AlterarVeiculo",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&idVeiculo=0"
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "idVeiculo", "at": ["form:idVeiculo"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Detalhes/{id}",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/AlterarVeiculo"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "idVeiculo", "type": "number", "required": true, "min": 1, "description": "IdVeiculo do veículo no estoque (consulte searchStockJson)" }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "updateLeadVehicleManual",
+      "description": "ESCRITA: Define manualmente um veículo fora do estoque no card do lead (POST /Lead/AlterarVeiculo com id, descricao e preco opcional).",
+      "request": {
+        "method": "POST",
+        "url": "https://sistema.autocerto.com/Lead/AlterarVeiculo",
+        "headers": {
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "accept-language": "pt-BR,pt;q=0.9",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          "__requestverificationtoken": "",
+          "user-agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        },
+        "body": "id=0&descricao=&preco="
+      },
+      "slots": [
+        { "ref": "session:requestVerificationToken", "at": ["header:__requestverificationtoken"] },
+        { "param": "id", "at": ["form:id"] },
+        { "param": "descricao", "at": ["form:descricao"] },
+        { "param": "preco", "at": ["form:preco"] }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://sistema.autocerto.com/Lead/Detalhes/{id}",
+        "companions": []
+      },
+      "match": {
+        "method": "POST",
+        "path": "/Lead/AlterarVeiculo"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        { "name": "id", "type": "number", "required": true, "min": 1, "description": "IdLead do lead" },
+        { "name": "descricao", "type": "string", "required": true, "description": "Descrição do veículo (ex.: Honda Civic 2016)" },
+        { "name": "preco", "type": "string", "required": false, "default": "", "description": "Preço opcional (sem pontos de milhar)" }
       ],
       "readOnly": false,
       "minTier": 1,
